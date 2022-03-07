@@ -1,10 +1,17 @@
 package main
 
 import (
+	"encoding/hex"
 	"log"
 	"os"
 
+	"crypto/md5"
+
 	"github.com/spf13/cobra"
+)
+
+var (
+	command, inputFile, checksum string
 )
 
 var cmdTemplate = &cobra.Command{
@@ -17,9 +24,6 @@ var cmdTemplate = &cobra.Command{
 		}
 		inputFile, _ := cmd.Flags().GetString("input-file")
 		checksum, _ := cmd.Flags().GetString("checksum")
-		log.Println(command)
-		log.Println(inputFile)
-		log.Println(checksum)
 	},
 }
 
@@ -29,5 +33,19 @@ func main() {
 	cmdTemplate.Flags().StringP("sum-string", "s", "", "Checksum string to verify with input file")
 	cmdTemplate.Execute()
 
-	os.Exit(0)
+	file, err := os.Open(inputFile)
+
+	if err != nil {
+		log.Fatalf("Cannot open file: %s, error: %v", inputFile, err)
+		os.Exit(1)
+	}
+	defer file.Close()
+
+	dataBuffer := make([]byte, 1024*10)
+	digest := md5.New()
+	for {
+		digest.Write(dataBuffer)
+	}
+	r := digest.Sum(nil)
+	return hex.EncodeToString(r)
 }
