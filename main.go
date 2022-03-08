@@ -12,10 +12,14 @@ import (
 	"github.com/spf13/cobra"
 )
 
+const (
+	bufferBytes        = 1024 * 1024 * 100 // 100MB
+	CMD_CREATE  string = "create"
+	CMD_VERIFY  string = "verify"
+)
+
 var (
 	command, inputFile, checksum string
-	CMD_CREATE                   string = "create"
-	CMD_VERIFY                   string = "verify"
 )
 
 var cmdTemplate = &cobra.Command{
@@ -68,9 +72,25 @@ func main() {
 	defer file.Close()
 
 	digest := md5.New()
-	if _, err := io.Copy(digest, file); err != nil {
-		log.Fatalln(err)
+
+	buffer := make([]byte, bufferBytes)
+	for {
+		_, err := file.Read(buffer)
+
+		// log.Printf("read %d bytes\n", bufferread)
+
+		if err != nil {
+			if err != io.EOF {
+				fmt.Println(err)
+			}
+			break
+		}
+		digest.Write(buffer)
 	}
+
+	// if _, err := io.Copy(digest, file); err != nil {
+	// 	log.Fatalln(err)
+	// }
 
 	if command == CMD_CREATE {
 		fmt.Println(hex.EncodeToString(digest.Sum(nil)))
